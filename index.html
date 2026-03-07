@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Para Mi Universo 🌌</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@500&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: #000; 
+            overflow: hidden; 
+            font-family: 'Dancing Script', cursive; 
+            color: white; 
+            width: 100vw; 
+            height: 100vh;
+            position: fixed; /* Evita rebotes en iPhone */
+        }
+
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+
+        /* PLANETA */
+        #planet-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            -webkit-transform: translate(-50%, -50%) scale(0);
+            width: 200px; height: 200px;
+            display: none;
+            z-index: 10;
+        }
+
+        #planet {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 30% 30%, #4facfe, #00f2fe, #0000ff);
+            border-radius: 50%;
+            box-shadow: inset -10px -10px 30px rgba(0,0,0,0.8), 0 0 40px rgba(79, 172, 254, 0.6);
+        }
+
+        /* CUBO 3D (Versión iOS) */
+        .scene {
+            width: 160px; height: 160px;
+            perspective: 1000px;
+            -webkit-perspective: 1000px;
+            display: none;
+            z-index: 50;
+        }
+        .cube {
+            width: 100%; height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transform: rotateX(-15deg) rotateY(-15deg);
+        }
+        .cube-face {
+            position: absolute;
+            width: 160px; height: 160px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: #111;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .cube-face img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+
+        /* Coordenadas del Cubo */
+        .front  { transform: rotateY(  0deg) translateZ(80px); -webkit-transform: rotateY(  0deg) translateZ(80px); }
+        .back   { transform: rotateY(180deg) translateZ(80px); -webkit-transform: rotateY(180deg) translateZ(80px); }
+        .right  { transform: rotateY( 90deg) translateZ(80px); -webkit-transform: rotateY( 90deg) translateZ(80px); }
+        .left   { transform: rotateY(-90deg) translateZ(80px); -webkit-transform: rotateY(-90deg) translateZ(80px); }
+        .top    { transform: rotateX( 90deg) translateZ(80px); -webkit-transform: rotateX( 90deg) translateZ(80px); }
+        .bottom { transform: rotateX(-90deg) translateZ(80px); -webkit-transform: rotateX(-90deg) translateZ(80px); }
+
+        /* UI */
+        #start-screen {
+            position: absolute; width: 100%; height: 100%;
+            background: #000; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .btn {
+            padding: 15px 40px; background: #00f2fe; border: none;
+            border-radius: 50px; color: #000; font-size: 1.4rem;
+            font-family: 'Montserrat', sans-serif; font-weight: bold;
+            z-index: 110; pointer-events: auto;
+        }
+        #progress-bar { 
+            position: fixed; bottom: 40px; width: 0%; height: 4px; 
+            background: #00f2fe; z-index: 20; left: 20%; right: 20%; 
+        }
+        .warp-word {
+            position: fixed; top: 50%; left: 50%; pointer-events: none;
+            z-index: 5; font-weight: bold; white-space: nowrap;
+        }
+        #proposal-screen { display: none; text-align: center; z-index: 100; padding: 20px; }
+        .btn-no { background: none; border: 1px solid white; color: white; position: absolute; transition: 0.1s; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1 style="margin-bottom: 25px; font-size: 2.2rem;">Nuestro Universo</h1>
+        <button class="btn" id="btn-start">Empezar Viaje 🚀</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div id="planet-container">
+        <div id="planet"></div>
+        <p style="text-align: center; margin-top: 15px; font-size: 1.2rem;">¡Llegamos! Tócalo 💙</p>
+    </div>
+
+    <div id="ui-container" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+        <div class="scene" id="cube-scene" style="pointer-events: auto;">
+            <div class="cube" id="cube">
+                <div class="cube-face front"><img src="https://raw.githubusercontent.com/lfjaramillo97/minovia/main/imagen1.jpeg"></div>
+                <div class="cube-face back"><img src="https://raw.githubusercontent.com/lfjaramillo97/minovia/main/imagen2.jpeg"></div>
+                <div class="cube-face right"><img src="https://raw.githubusercontent.com/lfjaramillo97/minovia/main/imagen3.jpeg"></div>
+                <div class="cube-face left"><img src="https://raw.githubusercontent.com/lfjaramillo97/minovia/main/imagen4.jpeg"></div>
+                <div class="cube-face top"><img src="https://raw.githubusercontent.com/lfjaramillo97/minovia/main/imagen5.jpeg"></div>
+                <div class="cube-face bottom"><img src="https://raw.githubusercontent.com/lfjaramillo97/minovia/main/imagen6.jpeg"></div>
+            </div>
+            <button class="btn" style="margin-top: 60px;" onclick="showProposal()">Continuar 💙</button>
+        </div>
+
+        <div id="proposal-screen" style="pointer-events: auto;">
+            <h2 style="font-size: 2rem; margin-bottom: 30px;">Entonces... ¿Quieres ser mi novia?</h2>
+            <button class="btn" onclick="alert('¡TE AMO! ❤️')">¡SÍ! 😍</button>
+            <button id="no-btn" class="btn btn-no" onclick="moveNo()" ontouchstart="moveNo()">No</button>
+        </div>
+    </div>
+
+    <div id="progress-bar"></div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const words = ["1500 besitos", "Mi linda", "Mi amor", "Mi vida", "Mi hermosa", "Me fascinas", "Me encantas", "Mi bebé", "Te extraño mucho"];
+    
+    let width, height, stars = [], active = false, progress = 0;
+
+    function init() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        stars = [];
+        for(let i=0; i<300; i++) {
+            stars.push({ x: Math.random()*width-width/2, y: Math.random()*height-height/2, z: Math.random()*width });
+        }
+    }
+
+    function spawnWord() {
+        if(!active || progress >= 100) return;
+        const el = document.createElement('div');
+        el.className = 'warp-word';
+        el.innerText = words[Math.floor(Math.random()*words.length)];
+        el.style.color = `hsl(${Math.random()*360}, 70%, 80%)`;
+        document.body.appendChild(el);
+
+        let z = width;
+        const xPos = Math.random()*width - width/2;
+        const yPos = Math.random()*height - height/2;
+
+        const timer = setInterval(() => {
+            z -= 15;
+            const x = (xPos / z) * width + width/2;
+            const y = (yPos / z) * height + height/2;
+            const s = (1 - z/width) * 5;
+            el.style.transform = `translate(-50%, -50%) scale(${s})`;
+            el.style.left = x + 'px'; el.style.top = y + 'px';
+            el.style.opacity = 1 - z/width;
+            if(z <= 40) { clearInterval(timer); el.remove(); }
+        }, 20);
+    }
+
+    function animate() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0,0,width,height);
+        stars.forEach(s => {
+            s.z -= (active ? 8 : 0.5);
+            if(s.z <= 0) s.z = width;
+            const x = (s.x / s.z) * width + width/2;
+            const y = (s.y / s.z) * height + height/2;
+            const size = (1 - s.z/width) * 3;
+            ctx.fillStyle = `rgba(255,255,255,${1 - s.z/width})`;
+            ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fill();
+        });
+
+        if(active && progress < 100) {
+            progress += 0.15;
+            document.getElementById('progress-bar').style.width = progress * 0.6 + '%';
+            document.getElementById('planet-container').style.display = 'block';
+            document.getElementById('planet-container').style.transform = `translate(-50%, -50%) scale(${progress/50})`;
+            if(Math.random() < 0.1) spawnWord();
+        }
+        requestAnimationFrame(animate);
+    }
+
+    // BOTÓN INICIO (Corrección iPhone)
+    document.getElementById('btn-start').addEventListener('click', function() {
+        active = true;
+        document.getElementById('start-screen').style.display = 'none';
+        init();
+    });
+
+    document.getElementById('planet-container').addEventListener('click', function() {
+        if(progress >= 90) {
+            this.style.display = 'none';
+            document.getElementById('progress-bar').style.display = 'none';
+            document.getElementById('cube-scene').style.display = 'flex';
+            document.getElementById('cube-scene').style.flexDirection = 'column';
+            document.getElementById('cube-scene').style.alignItems = 'center';
+        }
+    });
+
+    function showProposal() {
+        document.getElementById('cube-scene').style.display = 'none';
+        document.getElementById('proposal-screen').style.display = 'block';
+    }
+
+    function moveNo() {
+        const btn = document.getElementById('no-btn');
+        btn.style.left = Math.random() * 70 + '%';
+        btn.style.top = Math.random() * 70 + '%';
+    }
+
+    // CUBO TÁCTIL (Corrección iPhone)
+    let cube = document.getElementById('cube'), isDrag = false, lX, lY, rX = -15, rY = -15;
+    const sDrag = (x,y) => { isDrag = true; lX = x; lY = y; };
+    const mDrag = (x,y) => {
+        if(!isDrag) return;
+        rY += (x - lX) * 0.6; rX -= (y - lY) * 0.6;
+        cube.style.transform = `rotateX(${rX}deg) rotateY(${rY}deg)`;
+        cube.style.webkitTransform = `rotateX(${rX}deg) rotateY(${rY}deg)`;
+        lX = x; lY = y;
+    };
+    window.addEventListener('mousedown', e => sDrag(e.clientX, e.clientY));
+    window.addEventListener('touchstart', e => sDrag(e.touches[0].clientX, e.touches[0].clientY));
+    window.addEventListener('mousemove', e => mDrag(e.clientX, e.clientY));
+    window.addEventListener('touchmove', e => mDrag(e.touches[0].clientX, e.touches[0].clientY));
+    window.addEventListener('mouseup', () => isDrag = false);
+    window.addEventListener('touchend', () => isDrag = false);
+
+    init(); animate();
+</script>
+</body>
+</html>
