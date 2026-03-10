@@ -14,47 +14,60 @@
             color: white;
             width: 100vw;
             height: 100vh;
-            position: fixed;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-
-        #planet-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            width: 320px;
-            height: 320px;
-            display: none;
-            z-index: 10;
-        }
-
-        #planet {
-            width: 100%;
-            height: 100%;
-            position: relative;
+            /* Remove absolute fixed positioning on mobile to allow scrolling if completely necessary, otherwise ensure internal flex shrinks */
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        #blackhole-canvas {
-            display: block;
+        #webgl-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            /* behind canvas */
+            pointer-events: auto;
+            /* Allow raycaster interaction */
         }
 
-        .bh-hint {
+        /* 3D Canvas overlaid over WebGL */
+        canvas#canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            pointer-events: none;
+            /* Let clicks pass through to Three.js */
+        }
+
+        #sun-hint {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.8rem;
+            color: #ffeaae;
             text-align: center;
-            margin-top: 10px;
-            font-size: 1.5rem;
-            color: #ffca80;
+            font-family: 'Montserrat', sans-serif;
             text-shadow: 0 0 10px rgba(255, 202, 128, 0.8), 0 0 20px rgba(255, 157, 0, 0.6);
+            z-index: 20;
             animation: pulse-glow 2s infinite alternate;
+            pointer-events: none;
+            width: 90%;
+        }
+
+        #flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
         }
 
         .scene {
@@ -81,6 +94,9 @@
             position: relative;
             transform-style: preserve-3d;
             transform: rotateX(-15deg) rotateY(-15deg);
+            /* Added soft elegant glow for phase 2 polish */
+            box-shadow: 0 0 60px rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
         }
 
         .cube-face {
@@ -100,8 +116,13 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            pointer-events: none;
             opacity: 0.9;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .cube-face img:hover {
+            opacity: 1;
         }
 
         .front {
@@ -151,6 +172,33 @@
             }
         }
 
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+
+            14% {
+                transform: scale(1.05);
+            }
+
+            28% {
+                transform: scale(1);
+            }
+
+            42% {
+                transform: scale(1.05);
+            }
+
+            70% {
+                transform: scale(1);
+            }
+        }
+
+        .heartbeat-text {
+            animation: heartbeat 2s infinite;
+            display: inline-block;
+        }
+
         #start-screen {
             position: absolute;
             width: 100%;
@@ -171,9 +219,40 @@
             text-align: center;
             background: linear-gradient(to right, #ffca80, #ff9d00, #ffca80);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0px 4px 15px rgba(255, 157, 0, 0.5);
             padding: 0 20px;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(110vh) scale(0.5);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.8;
+            }
+
+            90% {
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translateY(-10vh) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .floating-heart {
+            position: absolute;
+            bottom: 0;
+            font-size: 1.5rem;
+            pointer-events: none;
+            z-index: 50;
+            animation: floatUp 5s linear forwards;
+            filter: drop-shadow(0 0 10px rgba(255, 105, 180, 0.5));
         }
 
         .btn {
@@ -237,19 +316,24 @@
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 30px;
-            max-width: 90%;
-            width: 600px;
+            max-height: 95vh;
+            overflow-y: auto;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05);
             animation: fadeIn 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            padding: 20px 15px;
+            /* Reduced for mobile */
         }
 
         .proposal-title {
-            font-size: 2.5rem;
-            margin-bottom: 35px;
+            font-size: 2rem;
+            /* Adjusted for mobile */
+            margin-bottom: 25px;
             color: #fff;
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 105, 180, 0.5);
+            /* Romantic glow added */
             line-height: 1.3;
+            font-family: 'Montserrat', sans-serif;
+            /* Explicitly fix font to remove cursive */
         }
 
         .letter {
@@ -283,4 +367,92 @@
             border-color: rgba(255, 255, 255, 0.5);
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
             transform: none;
+        }
+
+        /* Image Modal Styles */
+        #img-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #img-modal.active {
+            opacity: 1;
+        }
+
+        #modal-img {
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #img-modal.active #modal-img {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Responsive Tweaks */
+        @media (max-width: 600px) {
+            .letter {
+                font-size: 1.3rem;
+                /* smaller text */
+                margin-bottom: 20px;
+            }
+
+            .proposal-title {
+                font-size: 1.5rem;
+                /* smaller heading */
+            }
+
+            .btn {
+                padding: 12px 30px;
+                font-size: 1.1rem;
+            }
+
+            #proposal-screen {
+                padding: 20px 15px;
+                /* less padding */
+                width: 95%;
+                /* broader on small screens */
+            }
+
+            #proposal-screen>div {
+                height: 100px !important;
+                /* adjust bottom area length */
+            }
+
+            .btn-no {
+                top: 55px !important;
+                /* bring No button up */
+            }
         }

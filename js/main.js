@@ -25,15 +25,12 @@ const wordColors = [
     '#e8a838', '#f4c842', '#ff6a00', '#ffb700'
 ];
 
-let width, height, stars = [], wordMeteors = [], active = false, progress = 0;
+let width, height, wordMeteors = [], activeMeteors = false;
 
-function init() {
+function initMeteors() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    stars = []; wordMeteors = [];
-    for (let i = 0; i < 350; i++) {
-        stars.push({ x: Math.random() * width - width / 2, y: Math.random() * height - height / 2, z: Math.random() * width });
-    }
+    wordMeteors = [];
     for (let i = 0; i < 90; i++) wordMeteors.push(createWordMeteor(true));
 }
 
@@ -80,175 +77,40 @@ function drawWordMeteors() {
     ctx.restore();
 }
 
-function animate() {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, width, height);
+function animateMeteors() {
+    if (!activeMeteors) return;
 
-    stars.forEach(s => {
-        s.z -= active ? 8 : 0.4; // REDUCED BACKGROUND STAR SPEED TOO
-        if (s.z <= 0) s.z = width;
-        const x = (s.x / s.z) * width + width / 2, y = (s.y / s.z) * height + height / 2;
-        ctx.fillStyle = `rgba(255,255,255,${1 - s.z / width})`;
-        ctx.beginPath(); ctx.arc(x, y, (1 - s.z / width) * 2.5, 0, Math.PI * 2); ctx.fill();
-    });
+    // Clear canvas instead of painting black, since WebGL is behind it
+    ctx.clearRect(0, 0, width, height);
 
-    if (active) {
-        drawWordMeteors();
-        if (progress < 100) {
-            progress += 0.5;
-            document.getElementById('progress-bar').style.width = progress * 0.6 + '%';
-            const pC = document.getElementById('planet-container');
-            pC.style.display = 'block';
-            pC.style.transform = `translate(-50%,-50%) scale(${progress / 42})`;
-            drawBlackHole();
-        }
-    }
-    requestAnimationFrame(animate);
-}
+    drawWordMeteors();
 
-// ═══════════════════════════════════════════════════════════════
-//   G A R G A N T U A   —   Interstellar-style black hole
-// ═══════════════════════════════════════════════════════════════
-let bhAngle = 0;
-const BHC = document.getElementById('blackhole-canvas');
-const bctx = BHC.getContext('2d');
-const W = 320, H = 320, CX = W / 2, CY = H / 2;
-
-function drawBlackHole() {
-    bctx.clearRect(0, 0, W, H);
-    bhAngle += 0.007;          // very slow rotation — exactly like the film
-
-    // ── 1. Warm nebula background glow ──────────────────────────────────
-    const nebula = bctx.createRadialGradient(CX, CY, 62, CX, CY, 158);
-    nebula.addColorStop(0, 'rgba(0,0,0,0)');
-    nebula.addColorStop(0.28, 'rgba(75,25,0,0.5)');
-    nebula.addColorStop(0.6, 'rgba(120,45,0,0.22)');
-    nebula.addColorStop(1, 'rgba(0,0,0,0)');
-    bctx.beginPath(); bctx.arc(CX, CY, 158, 0, Math.PI * 2);
-    bctx.fillStyle = nebula; bctx.fill();
-
-    // ── 2. Accretion disk (in local rotating frame) ──────────────────────
-    bctx.save();
-    bctx.translate(CX, CY);
-    bctx.rotate(bhAngle);
-
-    function diskEllipse(rx, ry, lw, stops, ga) {
-        const g = bctx.createLinearGradient(-rx, 0, rx, 0);
-        stops.forEach(([p, c]) => g.addColorStop(p, c));
-        bctx.save();
-        bctx.globalAlpha = ga;
-        bctx.beginPath(); bctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-        bctx.strokeStyle = g; bctx.lineWidth = lw; bctx.stroke();
-        bctx.restore();
-    }
-
-    // outermost dust
-    diskEllipse(132, 18, 11, [
-        [0, 'rgba(0,0,0,0)'], [0.2, 'rgba(130,42,0,0.3)'], [0.5, 'rgba(200,85,10,0.48)'],
-        [0.8, 'rgba(130,42,0,0.3)'], [1, 'rgba(0,0,0,0)']
-    ], 0.55);
-
-    // main bright disk — orange-gold
-    diskEllipse(114, 13, 22, [
-        [0, 'rgba(0,0,0,0)'], [0.10, 'rgba(175,58,0,0.55)'], [0.35, 'rgba(255,135,18,0.95)'],
-        [0.50, 'rgba(255,215,105,1.0)'], [0.65, 'rgba(255,135,18,0.95)'],
-        [0.90, 'rgba(175,58,0,0.55)'], [1, 'rgba(0,0,0,0)']
-    ], 1.0);
-
-    // bright inner photon ring
-    diskEllipse(80, 8, 9, [
-        [0, 'rgba(0,0,0,0)'], [0.28, 'rgba(255,148,28,0.8)'], [0.50, 'rgba(255,238,148,1.0)'],
-        [0.72, 'rgba(255,148,28,0.8)'], [1, 'rgba(0,0,0,0)']
-    ], 1.0);
-
-    // ultra-thin innermost ring
-    diskEllipse(63, 5, 3, [
-        [0, 'rgba(0,0,0,0)'], [0.40, 'rgba(255,205,80,0.7)'], [0.50, 'rgba(255,245,185,1.0)'],
-        [0.60, 'rgba(255,205,80,0.7)'], [1, 'rgba(0,0,0,0)']
-    ], 0.9);
-
-    bctx.restore();   // end disk rotation
-
-    // ── 3. Gravitational lensing arcs (always upright) ───────────────────
-    bctx.save();
-    bctx.translate(CX, CY);
-
-    // Primary upper arc — the Gargantua signature
-    const ag1 = bctx.createLinearGradient(-102, 0, 102, 0);
-    [[0, 'rgba(0,0,0,0)'], [0.12, 'rgba(155,52,0,0.58)'], [0.38, 'rgba(255,158,38,0.97)'],
-    [0.50, 'rgba(255,225,118,1.0)'], [0.62, 'rgba(255,158,38,0.97)'],
-    [0.88, 'rgba(155,52,0,0.58)'], [1, 'rgba(0,0,0,0)']
-    ].forEach(([p, c]) => ag1.addColorStop(p, c));
-    bctx.globalAlpha = 0.94;
-    bctx.beginPath(); bctx.ellipse(0, -3, 98, 55, 0, Math.PI, Math.PI * 2);
-    bctx.strokeStyle = ag1; bctx.lineWidth = 10; bctx.stroke();
-
-    // bright highlight streak on top of arc
-    const ag2 = bctx.createLinearGradient(-82, 0, 82, 0);
-    [[0, 'rgba(0,0,0,0)'], [0.28, 'rgba(255,205,82,0.45)'], [0.50, 'rgba(255,248,205,0.82)'],
-    [0.72, 'rgba(255,205,82,0.45)'], [1, 'rgba(0,0,0,0)']
-    ].forEach(([p, c]) => ag2.addColorStop(p, c));
-    bctx.globalAlpha = 0.78;
-    bctx.beginPath(); bctx.ellipse(0, -3, 96, 54, 0, Math.PI * 1.07, Math.PI * 1.93);
-    bctx.strokeStyle = ag2; bctx.lineWidth = 4; bctx.stroke();
-
-    // outer ghost arc (secondary lensing ring)
-    bctx.globalAlpha = 0.28;
-    bctx.beginPath(); bctx.ellipse(0, -7, 121, 65, 0, Math.PI * 1.04, Math.PI * 1.96);
-    bctx.strokeStyle = 'rgba(255,140,38,0.75)'; bctx.lineWidth = 4; bctx.stroke();
-
-    // faint relativistic reflection below event horizon
-    bctx.globalAlpha = 0.15;
-    bctx.beginPath(); bctx.ellipse(0, 4, 90, 12, 0, 0, Math.PI);
-    bctx.strokeStyle = 'rgba(255,175,58,0.8)'; bctx.lineWidth = 3; bctx.stroke();
-
-    bctx.globalAlpha = 1;
-    bctx.restore();
-
-    // ── 4. Photon sphere glow ────────────────────────────────────────────
-    const ps = bctx.createRadialGradient(CX, CY, 56, CX, CY, 74);
-    ps.addColorStop(0, 'rgba(255,130,20,0.0)');
-    ps.addColorStop(0.35, 'rgba(255,168,55,0.58)');
-    ps.addColorStop(0.65, 'rgba(255,110,15,0.28)');
-    ps.addColorStop(1, 'rgba(0,0,0,0)');
-    bctx.beginPath(); bctx.arc(CX, CY, 74, 0, Math.PI * 2);
-    bctx.fillStyle = ps; bctx.fill();
-
-    // ── 5. Event horizon ────────────────────────────────────────────────
-    // warm rim glow
-    bctx.beginPath(); bctx.arc(CX, CY, 60, 0, Math.PI * 2);
-    bctx.strokeStyle = 'rgba(255,148,35,0.72)'; bctx.lineWidth = 3.5;
-    bctx.shadowBlur = 16; bctx.shadowColor = '#ff8800'; bctx.stroke();
-    bctx.shadowBlur = 0;
-    // absolute black
-    bctx.beginPath(); bctx.arc(CX, CY, 59, 0, Math.PI * 2);
-    bctx.fillStyle = '#000'; bctx.fill();
-
-    // ── 6. Orbiting spark particles ─────────────────────────────────────
-    bctx.save();
-    bctx.translate(CX, CY);
-    const N = 24;
-    for (let i = 0; i < N; i++) {
-        const a = (i / N) * Math.PI * 2 + bhAngle * 4.5;
-        const rx = 108 + Math.sin(i * 1.8) * 16;
-        const ry = 11 + Math.cos(i * 1.1) * 3;
-        const sz = 0.7 + Math.abs(Math.sin(i * 0.9 + bhAngle * 2)) * 1.5;
-        bctx.globalAlpha = 0.42 + Math.abs(Math.sin(i + bhAngle * 3)) * 0.58;
-        bctx.beginPath();
-        bctx.arc(Math.cos(a) * rx, Math.sin(a) * ry, sz, 0, Math.PI * 2);
-        bctx.fillStyle = `hsl(${26 + i * 4},100%,${56 + i * 1.3}%)`;
-        bctx.fill();
-    }
-    bctx.globalAlpha = 1;
-    bctx.restore();
+    requestAnimationFrame(animateMeteors);
 }
 
 // ── Controls ──────────────────────────────────────────────────────────────────
 document.getElementById('btn-start').addEventListener('click', function () {
-    active = true;
     document.getElementById('start-screen').style.display = 'none';
-    init();
+
+    // 1. Start WebGL Solar System
+    if (window.startSolarSystem) {
+        window.startSolarSystem();
+    }
+
+    // 2. Start Overlay Meteors
+    activeMeteors = true;
+    initMeteors();
+    animateMeteors();
 });
+
+// Phase 2 transition called from solarSystem.js raycaster interaction
+window.startPhase2 = function () {
+    activeMeteors = false; // stop 2D rendering loop
+    document.getElementById('progress-bar').style.display = 'none';
+    document.getElementById('cube-scene').style.display = 'flex';
+    lastTime = performance.now();
+    requestAnimationFrame(animateCube);
+};
 
 document.getElementById('planet-container').addEventListener('click', function () {
     if (progress >= 85) {
@@ -264,16 +126,21 @@ document.getElementById('planet-container').addEventListener('click', function (
 function showProposal() {
     document.getElementById('cube-scene').style.display = 'none';
     document.getElementById('proposal-screen').style.display = 'block';
+
+    // Add heartbeat to question title
+    const proposalTitle = document.querySelector('.proposal-title');
+    proposalTitle.classList.add('heartbeat-text');
 }
 
 function moveNo() {
     const b = document.getElementById('no-btn');
     b.style.transform = 'none';
-    b.style.left = (Math.random() * 80 + 10) + '%';
-    b.style.top = (Math.random() * 80 + 10) + '%';
+    // Constraint inside container to prevent it going off screen
+    b.style.left = (Math.random() * 60 + 20) + '%';
+    b.style.top = (Math.random() * 60 + 20) + '%';
 }
 
-let cube = document.getElementById('cube'), isDrag = false, lX, lY, rX = -15, rY = -15;
+let cube = document.getElementById('cube'), isDrag = false, isDraggingAction = false, lX, lY, rX = -15, rY = -15;
 let lastTime = 0;
 
 // --- Smooth JS Auto-rotation Function ---
@@ -293,9 +160,11 @@ function animateCube(time) {
     }
 }
 
-const sDrag = (x, y) => { isDrag = true; lX = x; lY = y; };
+const sDrag = (x, y) => { isDrag = true; isDraggingAction = false; lX = x; lY = y; };
 const mDrag = (x, y) => {
     if (!isDrag) return;
+    // Determine if mouse actually moved to distinct click intent vs drag
+    if (Math.abs(x - lX) > 2 || Math.abs(y - lY) > 2) isDraggingAction = true;
     rY += (x - lX) * 0.6; rX -= (y - lY) * 0.6;
     // The cube style transform is handled by the animation loop now
     lX = x; lY = y;
@@ -307,4 +176,24 @@ window.addEventListener('touchmove', e => mDrag(e.touches[0].clientX, e.touches[
 window.addEventListener('mouseup', () => isDrag = false);
 window.addEventListener('touchend', () => isDrag = false);
 
-init(); animate();
+// Image Modal Logic
+const modal = document.getElementById('img-modal');
+const modalImg = document.getElementById('modal-img');
+
+document.querySelectorAll('.cube-face img').forEach(img => {
+    // Use pointerup or click, but only if not dragging
+    img.addEventListener('click', (e) => {
+        if (isDraggingAction) return; // Prevent open if they were spinning cube
+        modalImg.src = e.target.src;
+        modal.style.display = 'flex';
+        // setTimeout to allow display to apply before fading in
+        setTimeout(() => modal.classList.add('active'), 10);
+    });
+});
+
+function closeImage() {
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+// init(); animate(); is bypassed because it waits for the initial user click on "Empezar Viaje"
