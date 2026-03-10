@@ -16,14 +16,16 @@
         <button class="btn" id="btn-start">Empezar Viaje 🚀</button>
     </div>
 
+    <!-- WebGL Container for Solar System Background -->
+    <div id="webgl-container"></div>
+    <!-- Overlay for Word Meteors -->
     <canvas id="canvas"></canvas>
 
-    <div id="planet-container">
-        <div id="planet">
-            <canvas id="blackhole-canvas" width="320" height="320"></canvas>
-        </div>
-        <p class="bh-hint">Toca el horizonte de sucesos 💙</p>
-    </div>
+    <!-- Interactive text over the sun -->
+    <div id="sun-hint" style="display:none;">Toca el Sol para continuar nuestro viaje ☀️</div>
+
+    <!-- Cinematic Flash Transition -->
+    <div id="flash-overlay"></div>
 
     <div id="ui-container">
         <div class="scene" id="cube-scene" style="pointer-events:auto;">
@@ -62,7 +64,16 @@
 
     <div id="progress-bar"></div>
 
+    <!-- Image Modal -->
+    <div id="img-modal">
+        <img id="modal-img" src="" alt="Ampliada">
+        <button class="modal-close" onclick="closeImage()">Cerrar</button>
+    </div>
+
     <!-- We load the new scripts -->
+    <!-- We load Three.js via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/solarSystem.js"></script>
     <script src="js/main.js"></script>
 </body>
 
