@@ -26,6 +26,8 @@ const wordColors = [
 ];
 
 let width, height, wordMeteors = [], activeMeteors = false;
+let cube, isDrag = false, isDraggingAction = false, lX, lY, rX = -15, rY = -15;
+let lastTime = 0;
 
 function initMeteors() {
     width = canvas.width = window.innerWidth;
@@ -105,23 +107,22 @@ document.getElementById('btn-start').addEventListener('click', function () {
 
 // Phase 2 transition called from solarSystem.js raycaster interaction
 window.startPhase2 = function () {
-    activeMeteors = false; // stop 2D rendering loop
-    document.getElementById('progress-bar').style.display = 'none';
-    document.getElementById('cube-scene').style.display = 'flex';
-    lastTime = performance.now();
-    requestAnimationFrame(animateCube);
-};
-
-document.getElementById('planet-container').addEventListener('click', function () {
-    if (progress >= 85) {
-        this.style.display = 'none';
+    try {
+        activeMeteors = false; // stop 2D rendering loop
         document.getElementById('progress-bar').style.display = 'none';
         document.getElementById('cube-scene').style.display = 'flex';
-        active = false;
+
+        // Initialize cube element here to ensure DOM is ready
+        cube = document.getElementById('cube');
+
         lastTime = performance.now();
         requestAnimationFrame(animateCube);
+    } catch (e) {
+        alert("CRITICAL Phase 2 Error: " + e.message);
     }
-});
+};
+
+// Old black hole click event removed for new solar system transition
 
 function showProposal() {
     document.getElementById('cube-scene').style.display = 'none';
@@ -140,8 +141,7 @@ function moveNo() {
     b.style.top = (Math.random() * 60 + 20) + '%';
 }
 
-let cube = document.getElementById('cube'), isDrag = false, isDraggingAction = false, lX, lY, rX = -15, rY = -15;
-let lastTime = 0;
+// Variables hoisted to top of file
 
 // --- Smooth JS Auto-rotation Function ---
 function animateCube(time) {

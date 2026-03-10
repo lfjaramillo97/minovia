@@ -250,45 +250,59 @@ function animateSolarSystem() {
 
 // Controls the bright flash overlay to switch into Phase 2
 function triggerCinematicTransition() {
-    ssActive = false; // Stop rendering
-    const flash = document.getElementById('flash-overlay');
-    let flashOpacity = 0;
+    try {
+        ssActive = false; // Stop rendering
+        const flash = document.getElementById('flash-overlay');
+        let flashOpacity = 0;
 
-    // Step 1: Fade IN white flash manually
-    function fadeOutScene() {
-        flashOpacity += 0.05;
-        flash.style.opacity = flashOpacity;
-        if (flashOpacity < 1) {
-            requestAnimationFrame(fadeOutScene);
-        } else {
-            // Step 2: Swap the DOM elements while totally white
-            webglContainer.style.display = 'none';
-            sunHint.style.display = 'none';
-            document.getElementById('canvas').style.display = 'none';
+        // Step 1: Fade IN white flash manually
+        function fadeOutScene() {
+            try {
+                flashOpacity += 0.05;
+                flash.style.opacity = flashOpacity;
+                if (flashOpacity < 1) {
+                    requestAnimationFrame(fadeOutScene);
+                } else {
+                    // Step 2: Swap the DOM elements while totally white
+                    webglContainer.style.display = 'none';
+                    sunHint.style.display = 'none';
+                    document.getElementById('canvas').style.display = 'none';
 
-            if (typeof window.startPhase2 === 'function') {
-                window.startPhase2();
-            }
+                    try {
+                        if (typeof window.startPhase2 === 'function') {
+                            window.startPhase2();
+                        } else {
+                            alert("startPhase2 not found!");
+                        }
+                    } catch (e) {
+                        alert("Error inside startPhase2: " + e.message);
+                    }
 
-            // Step 3: Fade OUT white flash manually (Wait a tiny bit for render buffer)
-            setTimeout(() => {
-                requestAnimationFrame(fadeInCube);
-            }, 100);
+                    // Step 3: Fade OUT white flash manually (Wait a tiny bit for render buffer)
+                    setTimeout(() => {
+                        requestAnimationFrame(fadeInCube);
+                    }, 100);
+                }
+            } catch (e) { alert("Error in fadeOutScene: " + e.message); }
         }
-    }
 
-    function fadeInCube() {
-        flashOpacity -= 0.05;
-        flash.style.opacity = flashOpacity;
-        if (flashOpacity > 0) {
-            requestAnimationFrame(fadeInCube);
-        } else {
-            flash.style.display = 'none'; // Completely remove from flow
+        function fadeInCube() {
+            try {
+                flashOpacity -= 0.05;
+                flash.style.opacity = flashOpacity;
+                if (flashOpacity > 0) {
+                    requestAnimationFrame(fadeInCube);
+                } else {
+                    flash.style.display = 'none'; // Completely remove from flow
+                }
+            } catch (e) { alert("Error in fadeInCube: " + e.message); }
         }
-    }
 
-    // Start sequence
-    requestAnimationFrame(fadeOutScene);
+        // Start sequence
+        requestAnimationFrame(fadeOutScene);
+    } catch (e) {
+        alert("Top level trigger error: " + e.message);
+    }
 }
 
 // Expose starter globally
